@@ -31,6 +31,9 @@ class DiagnosticoResidual:
     leverage: np.ndarray | None = None
     max_leverage: float | None = None
     press_real: bool = False
+    cook_distance: np.ndarray | None = None
+    max_cook_distance: float | None = None
+    n_observacoes_influentes: int | None = None
 
 
 
@@ -109,6 +112,42 @@ def press_com_leverage(
 
 
 
+def cook_distance(
+    observado: np.ndarray,
+    estimado: np.ndarray,
+    leverage: np.ndarray,
+    n_parametros: int,
+) -> np.ndarray:
+    """Calcula Cook Distance para cada observacao.
+
+    Formula operacional:
+
+    D_i = (e_i² / (p * MSE)) * [h_ii / (1 - h_ii)²]
+
+    onde:
+    - e_i = residuo da observacao i;
+    - p = numero de parametros do modelo;
+    - MSE = quadrado medio residual;
+    - h_ii = leverage da observacao i.
+    """
+
+    observado = np.asarray(observado, dtype=float)
+    estimado = np.asarray(estimado, dtype=float)
+    leverage = np.asarray(leverage, dtype=float)
+
+    residuos = observado - estimado
+    n = len(residuos)
+    p = max(int(n_parametros), 1)
+
+    mse = np.sum(residuos**2) / max(n - p, 1)
+
+    denom = p * max(mse, EPSILON)
+    leverage_denom = np.clip((1 - leverage) ** 2, EPSILON, None)
+
+    return (residuos**2 / denom) * (leverage / leverage_denom)
+
+
+
 def press_aproximado(
     observado: np.ndarray,
     estimado: np.ndarray,
@@ -128,8 +167,8 @@ def diagnosticar_residuos(
 ) -> DiagnosticoResidual:
     """Gera diagnostico residual.
 
-    Quando `matriz_x` e fornecida, calcula leverage e PRESS real. Caso
-    contrario, usa PRESS aproximado.
+    Quando `matriz_x` e fornecida, calcula leverage, PRESS real e Cook
+    Distance. Caso contrario, usa PRESS aproximado.
     """
 
     observado = np.asarray(observado, dtype=float)
@@ -142,12 +181,22 @@ def diagnosticar_residuos(
     leverage = None
     max_leverage = None
     press_real = False
+    cooks = None
+    max_cook = None
+    n_influentes = None
 
     if matriz_x is not None:
         leverage = calcular_leverage(matriz_x)
         press = press_com_leverage(observado, estimado, leverage)
         max_leverage = float(np.max(leverage))
         press_real = True
+
+        n_parametros = matriz_x.shape[1]
+        cooks = cook_distance(observado, estimado, leverage, n_parametros)
+        max_cook = float(np.max(cooks))
+
+        limite_cook = 4 / max(len(observado), 1)
+        n_influentes = int(np.sum(cooks > limite_cook))
     else:
         press = press_aproximado(observado, estimado)
 
@@ -163,4 +212,7 @@ def diagnosticar_residuos(
         leverage=leverage,
         max_leverage=max_leverage,
         press_real=press_real,
+        cook_distance=cooks,
+        max_cook_distance=max_cook,
+        n_observacoes_influentes=n_influentes,
     )
