@@ -22,6 +22,7 @@ class ResultadoSortimentoProjetado:
     volume_total_m3: float
     massa_total_ton: float
     receita_total: float
+    valor_medio_ponderado_ton: float
 
 
 class ErroSortimentoProjetado(Exception):
@@ -34,7 +35,14 @@ def consolidar_sortimento_prognostico(
     conversao_m3_ton: float,
     precos_ton: dict[str, float],
 ) -> ResultadoSortimentoProjetado:
-    """Consolida volume, massa e receita por sortimento."""
+    """Consolida volume, massa e receita por sortimento.
+
+    O valor medio geral por tonelada e calculado por media ponderada:
+
+    valor_medio_ponderado = receita_total / massa_total
+
+    Isso evita media simples entre sortimentos com massas diferentes.
+    """
 
     acumulado: dict[str, dict[str, float]] = {}
 
@@ -48,11 +56,8 @@ def consolidar_sortimento_prognostico(
                 }
 
             volume_ha = tora.volume_m3 * resultado.arvores_ha
-
             massa = volume_ha * conversao_m3_ton
-
             preco = precos_ton.get(tora.sortimento, 0.0)
-
             receita = massa * preco
 
             acumulado[tora.sortimento]["volume"] += volume_ha
@@ -68,7 +73,6 @@ def consolidar_sortimento_prognostico(
     for sortimento, valores in acumulado.items():
         massa = valores["massa"]
         receita = valores["receita"]
-
         valor_medio = receita / massa if massa > 0 else 0.0
 
         item = ItemSortimentoProjetado(
@@ -90,9 +94,14 @@ def consolidar_sortimento_prognostico(
         reverse=True,
     )
 
+    valor_medio_ponderado = (
+        receita_total / massa_total if massa_total > 0 else 0.0
+    )
+
     return ResultadoSortimentoProjetado(
         itens=itens,
         volume_total_m3=float(volume_total),
         massa_total_ton=float(massa_total),
         receita_total=float(receita_total),
+        valor_medio_ponderado_ton=float(valor_medio_ponderado),
     )
