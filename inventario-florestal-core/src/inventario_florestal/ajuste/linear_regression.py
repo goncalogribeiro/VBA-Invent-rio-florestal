@@ -36,6 +36,8 @@ class ResultadoRegressaoLinear:
     bic: float
     n: int
     n_parametros: int
+    matriz_x: np.ndarray
+    nomes_variaveis_x: list[str]
 
 
 def ajustar_ols(
@@ -44,24 +46,7 @@ def ajustar_ols(
     variaveis_independentes: list[str],
     intercepto: bool = True,
 ) -> ResultadoRegressaoLinear:
-    """Ajusta uma regressao linear por minimos quadrados ordinarios.
-
-    Parameters
-    ----------
-    dados:
-        DataFrame contendo a variavel dependente e as independentes.
-    variavel_dependente:
-        Nome da coluna da variavel resposta.
-    variaveis_independentes:
-        Lista de colunas explicativas.
-    intercepto:
-        Define se o modelo deve incluir intercepto.
-
-    Returns
-    -------
-    ResultadoRegressaoLinear
-        Resultado padronizado do ajuste.
-    """
+    """Ajusta uma regressao linear por minimos quadrados ordinarios."""
 
     colunas = [variavel_dependente, *variaveis_independentes]
     dados_validos = dados[colunas].dropna().copy()
@@ -103,4 +88,6 @@ def ajustar_ols(
         bic=float(modelo.bic),
         n=int(len(observado)),
         n_parametros=n_parametros,
+        matriz_x=x.to_numpy(dtype=float),
+        nomes_variaveis_x=[str(coluna) for coluna in x.columns],
     )
