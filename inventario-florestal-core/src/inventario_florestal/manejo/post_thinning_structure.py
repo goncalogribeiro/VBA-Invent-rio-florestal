@@ -17,6 +17,8 @@ class EstruturaPosDesbaste:
     g: float
     dg: float
     hd: float
+    intensidade_n_real: float
+    intensidade_g_real: float
 
 
 class ErroRedistribuicaoEstrutural(Exception):
@@ -73,9 +75,21 @@ def recalcular_estrutura_pos_desbaste(
             "Dg pós-desbaste inválido."
         )
 
+    intensidade_n_real = (
+        resultado_desbaste.removido_n
+        / estado_original.n
+    )
+
+    intensidade_g_real = (
+        resultado_desbaste.removido_g
+        / estado_original.g
+    )
+
     return EstruturaPosDesbaste(
         n=float(n_novo),
         g=float(g_novo),
         dg=float(dg_novo),
         hd=float(estado_original.hd),
+        intensidade_n_real=float(intensidade_n_real),
+        intensidade_g_real=float(intensidade_g_real),
     )
