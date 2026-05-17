@@ -1,12 +1,13 @@
 """Torneio universal de modelos biometricos.
 
-Versao inicial limitada a modelos lineares e linearizados. Modelos nao lineares
-serao incorporados posteriormente, apos estabilizacao do pipeline linear.
+O torneio executa modelos lineares, linearizados e nao lineares registrados no
+catalogo, retornando ranking unico por grupo biometrico.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Any
 
 import pandas as pd
 
@@ -14,6 +15,13 @@ from inventario_florestal.ajuste.fit_from_model import (
     ErroAjusteModelo,
     ResultadoAjusteModelo,
     ajustar_modelo_linear_catalogo,
+)
+from inventario_florestal.ajuste.fit_nonlinear_from_model import (
+    ErroExecucaoModeloNaoLinear,
+    ajustar_modelo_nao_linear,
+)
+from inventario_florestal.ajuste.nonlinear_regression import (
+    ErroRegressaoNaoLinear,
 )
 from inventario_florestal.modelos.schema import CatalogoModelos, GrupoModelo
 from inventario_florestal.ranking.ranking_engine import (
@@ -34,7 +42,7 @@ class ItemRankingModelo:
     metricas: dict[str, float]
     aic: float | None
     bic: float | None
-    ajuste: ResultadoAjusteModelo | None = None
+    ajuste: Any | None = None
     erro: str | None = None
 
 
@@ -55,90 +63,30 @@ class ResultadoTorneioModelos:
 
 
 
-def executar_torneio_linear(
-    catalogo: CatalogoModelos,
-    dados: pd.DataFrame,
-    grupo: GrupoModelo,
-) -> ResultadoTorneioModelos:
-    """Executa torneio entre modelos lineares/linearizados de um grupo."""
+def _criar_item_erro(modelo, mensagem: str) -> ItemRankingModelo:
+    return ItemRankingModelo(
+        posicao=0,
+        modelo_id=modelo.id,
+        nome_modelo=modelo.nome,
+        grupo=modelo.grupo,
+        pontuacao=float("-inf"),
+        metricas={},
+        aic=None,
+        bic=None,
+        ajuste=None,
+        erro=mensagem,
+    )
 
-    modelos = catalogo.filtrar_por_grupo(grupo)
 
-    itens_validos: list[ItemRankingModelo] = []
-    itens_erro: list[ItemRankingModelo] = []
 
-    for modelo in modelos:
-        if modelo.tipo_regressao not in {"linear", "linear_sem_intercepto"}:
-            itens_erro.append(
-                ItemRankingModelo(
-                    posicao=0,
-                    modelo_id=modelo.id,
-                    nome_modelo=modelo.nome,
-                    grupo=modelo.grupo,
-                    pontuacao=float("-inf"),
-                    metricas={},
-                    aic=None,
-                    bic=None,
-                    ajuste=None,
-                    erro="Modelo nao linear ignorado nesta fase do torneio.",
-                )
-            )
-            continue
-
-        try:
-            ajuste = ajustar_modelo_linear_catalogo(modelo, dados)
-
-            metricas_base = (
-                ajuste.metricas_escala_original
-                if ajuste.metricas_escala_original is not None
-                else ajuste.resultado_linear.metricas
-            )
-
-            metricas = combinar_metricas_com_diagnostico(
-                metricas=metricas_base,
-                diagnostico=ajuste.diagnostico_residual,
-            )
-
-            pontuacao = calcular_pontuacao_padrao(metricas)
-
-            itens_validos.append(
-                ItemRankingModelo(
-                    posicao=0,
-                    modelo_id=modelo.id,
-                    nome_modelo=modelo.nome,
-                    grupo=modelo.grupo,
-                    pontuacao=pontuacao,
-                    metricas=metricas,
-                    aic=ajuste.resultado_linear.aic,
-                    bic=ajuste.resultado_linear.bic,
-                    ajuste=ajuste,
-                    erro=None,
-                )
-            )
-
-        except (ErroAjusteModelo, ValueError, KeyError) as exc:
-            itens_erro.append(
-                ItemRankingModelo(
-                    posicao=0,
-                    modelo_id=modelo.id,
-                    nome_modelo=modelo.nome,
-                    grupo=modelo.grupo,
-                    pontuacao=float("-inf"),
-                    metricas={},
-                    aic=None,
-                    bic=None,
-                    ajuste=None,
-                    erro=str(exc),
-                )
-            )
-
+def _ordenar_ranking(itens_validos: list[ItemRankingModelo]) -> list[ItemRankingModelo]:
     itens_ordenados = sorted(
         itens_validos,
         key=lambda item: item.pontuacao,
         reverse=True,
     )
 
-    ranking = [
+    return [
         ItemRankingModelo(
             posicao=idx,
             modelo_id=item.modelo_id,
@@ -154,8 +102,125 @@ def executar_torneio_linear(
         for idx, item in enumerate(itens_ordenados, start=1)
     ]
 
+
+
+def executar_torneio(
+    catalogo: CatalogoModelos,
+    dados: pd.DataFrame,
+    grupo: GrupoModelo,
+    incluir_experimentais: bool = True,
+) -> ResultadoTorneioModelos:
+    """Executa torneio entre modelos suportados de um grupo biometrico."""
+
+    modelos = catalogo.filtrar_por_grupo(grupo)
+
+    itens_validos: list[ItemRankingModelo] = []
+    itens_erro: list[ItemRankingModelo] = []
+
+    for modelo in modelos:
+        if modelo.status_validacao == "experimental" and not incluir_experimentais:
+            itens_erro.append(
+                _criar_item_erro(
+                    modelo,
+                    "Modelo experimental ignorado por configuracao do torneio.",
+                )
+            )
+            continue
+
+        try:
+            if modelo.tipo_regressao in {"linear", "linear_sem_intercepto"}:
+                ajuste: ResultadoAjusteModelo = ajustar_modelo_linear_catalogo(
+                    modelo,
+                    dados,
+                )
+
+                metricas_base = (
+                    ajuste.metricas_escala_original
+                    if ajuste.metricas_escala_original is not None
+                    else ajuste.resultado_linear.metricas
+                )
+
+                metricas = combinar_metricas_com_diagnostico(
+                    metricas=metricas_base,
+                    diagnostico=ajuste.diagnostico_residual,
+                )
+
+                aic = ajuste.resultado_linear.aic
+                bic = ajuste.resultado_linear.bic
+
+            elif modelo.tipo_regressao == "nao_linear":
+                ajuste = ajustar_modelo_nao_linear(modelo, dados)
+
+                metricas = combinar_metricas_com_diagnostico(
+                    metricas=ajuste.metricas,
+                    diagnostico=ajuste.diagnostico_residual,
+                )
+
+                aic = None
+                bic = None
+
+            else:
+                itens_erro.append(
+                    _criar_item_erro(
+                        modelo,
+                        f"Tipo de regressao ainda nao suportado: {modelo.tipo_regressao}",
+                    )
+                )
+                continue
+
+            pontuacao = calcular_pontuacao_padrao(metricas)
+
+            itens_validos.append(
+                ItemRankingModelo(
+                    posicao=0,
+                    modelo_id=modelo.id,
+                    nome_modelo=modelo.nome,
+                    grupo=modelo.grupo,
+                    pontuacao=pontuacao,
+                    metricas=metricas,
+                    aic=aic,
+                    bic=bic,
+                    ajuste=ajuste,
+                    erro=None,
+                )
+            )
+
+        except (
+            ErroAjusteModelo,
+            ErroExecucaoModeloNaoLinear,
+            ErroRegressaoNaoLinear,
+            ValueError,
+            KeyError,
+        ) as exc:
+            itens_erro.append(_criar_item_erro(modelo, str(exc)))
+
     return ResultadoTorneioModelos(
         grupo=grupo,
-        ranking=ranking,
+        ranking=_ordenar_ranking(itens_validos),
         modelos_com_erro=itens_erro,
+    )
+
+
+
+def executar_torneio_linear(
+    catalogo: CatalogoModelos,
+    dados: pd.DataFrame,
+    grupo: GrupoModelo,
+) -> ResultadoTorneioModelos:
+    """Compatibilidade: executa torneio apenas com modelos lineares."""
+
+    modelos_originais = catalogo.modelos
+    catalogo_linear = CatalogoModelos(
+        metadata=catalogo.metadata,
+        modelos=[
+            modelo
+            for modelo in modelos_originais
+            if modelo.tipo_regressao in {"linear", "linear_sem_intercepto"}
+        ],
+    )
+
+    return executar_torneio(
+        catalogo=catalogo_linear,
+        dados=dados,
+        grupo=grupo,
     )
