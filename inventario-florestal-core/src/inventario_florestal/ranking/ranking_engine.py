@@ -27,11 +27,7 @@ def _normalizar_penalizacao(
     valor: float,
     escala: float = 100.0,
 ) -> float:
-    """Normaliza penalizacoes para reduzir dominancia numerica.
-
-    Valores percentuais altos podem dominar o ranking se forem usados
-    diretamente. Esta funcao comprime a escala sem eliminar a penalizacao.
-    """
+    """Normaliza penalizacoes para reduzir dominancia numerica."""
 
     return valor / (abs(valor) + escala)
 
@@ -41,22 +37,16 @@ def calcular_pontuacao_padrao(
     metricas: dict[str, float],
     pesos: dict[str, float] | None = None,
 ) -> float:
-    """Calcula pontuacao sintetica para ranking.
+    """Calcula pontuacao sintetica para ranking biometrico robusto.
 
-    Criterios positivos:
+    O criterio principal continua sendo R² ajustado.
 
-    - R² ajustado.
+    Penalizacoes adicionais sao aplicadas para:
 
-    Criterios negativos:
-
-    - Syx%;
-    - bias absoluto;
-    - PRESS RMSE;
-    - erro percentual absoluto medio;
-    - maior erro percentual absoluto.
-
-    A pontuacao e adimensional e deve ser interpretada apenas de forma
-    comparativa dentro do mesmo torneio.
+    - erro residual;
+    - PRESS;
+    - residuos extremos;
+    - observacoes influentes.
     """
 
     pesos_padrao = {
@@ -64,8 +54,10 @@ def calcular_pontuacao_padrao(
         "syx_percentual": -0.20,
         "bias": -0.10,
         "press_rmse": -0.05,
-        "media_abs_residuos_percentuais": -0.07,
-        "max_abs_residuo_percentual": -0.03,
+        "media_abs_residuos_percentuais": -0.05,
+        "max_abs_residuo_percentual": -0.02,
+        "max_cook_distance": -0.02,
+        "n_observacoes_influentes": -0.01,
     }
 
     pesos_utilizados = pesos or pesos_padrao
@@ -91,11 +83,7 @@ def combinar_metricas_com_diagnostico(
     metricas: dict[str, float],
     diagnostico: object | None,
 ) -> dict[str, float]:
-    """Combina metricas do ajuste com indicadores residuais.
-
-    O uso de `object` evita acoplamento forte e permite evoluir o diagnostico
-    sem quebrar o motor de ranking.
-    """
+    """Combina metricas do ajuste com indicadores residuais."""
 
     combinadas = dict(metricas)
 
@@ -108,8 +96,13 @@ def combinar_metricas_com_diagnostico(
         "media_residuos",
         "media_abs_residuos_percentuais",
         "max_abs_residuo_percentual",
+        "max_cook_distance",
+        "n_observacoes_influentes",
     ):
         if hasattr(diagnostico, atributo):
-            combinadas[atributo] = float(getattr(diagnostico, atributo))
+            valor = getattr(diagnostico, atributo)
+
+            if valor is not None:
+                combinadas[atributo] = float(valor)
 
     return combinadas
