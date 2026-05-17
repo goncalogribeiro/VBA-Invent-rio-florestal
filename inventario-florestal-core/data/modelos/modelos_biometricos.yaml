@@ -1,94 +1,189 @@
 metadata:
-  versao: "0.1"
-  descricao: "Catalogo estruturado de modelos biometricos"
+  versao: "0.2"
+  descricao: "Catalogo estruturado de modelos biometricos, cenarios de sortimento e parametros operacionais"
 
 modelos:
 
   - id: H01
-
     grupo: hipsometria
-
     nome: Prodan
-
     formula: "d^2 / h = beta0 + beta1*d + beta2*d^2"
-
     variavel_dependente: h
-
     variaveis_independentes:
       - d
-
     parametros:
       - beta0
       - beta1
       - beta2
-
     tipo_regressao: nao_linear
-
     linearizavel: false
-
     eh_logaritmico: false
-
     base_logaritmo: null
-
     metodo_ajuste: nls
-
     metodo_inverso: newton_raphson
-
     especie:
       - pinus_taeda
       - pinus_elliottii
-
     regiao:
       - sul_brasil
-
     fonte:
       autores: "Martins et al."
       ano: 2021
-
     status_validacao: pendente
-
     observacoes:
       - "Modelo inicial do catalogo"
 
   - id: V01
-
     grupo: volumetria
-
     nome: Schumacher-Hall
-
     formula: "ln(V) = beta0 + beta1*ln(DAP) + beta2*ln(H)"
-
     variavel_dependente: V
-
     variaveis_independentes:
       - DAP
       - H
-
     parametros:
       - beta0
       - beta1
       - beta2
-
     tipo_regressao: linear
-
     linearizavel: true
-
     eh_logaritmico: true
-
     base_logaritmo: ln
-
     metodo_ajuste: ols
-
     metodo_correcao_vies: meyer
-
     especie:
       - pinus_taeda
-
     regiao:
       - sul_brasil
-
     fonte:
       autores: "Stepka et al."
       ano: 2017
-
     status_validacao: pendente
+
+parametros_operacionais:
+  conversao_m3_ton:
+    tipo: tabela_etaria
+    unidade: "t/m3"
+    descricao: "Fator operacional de conversao de volume solido para massa comercial por idade."
+    valores:
+      5: 0.9047
+      6: 0.9080
+      7: 0.9114
+      8: 0.9147
+      9: 0.9180
+      10: 0.9213
+      11: 0.9470
+      12: 0.9280
+      13: 0.9310
+      14: 0.9340
+      15: 0.9370
+      16: 0.9400
+      17: 0.9428
+      18: 0.9455
+      19: 0.9483
+      20: 0.9510
+      21: 0.9534
+      22: 0.9559
+      23: 0.9583
+      24: 0.9607
+      25: 0.9632
+
+cenarios_sortimento:
+  pessimista:
+    idade_min: 8
+    idade_max: 25
+    unidade_idade: anos
+    sortimentos:
+      - id: SORT_P01
+        nome: Energia
+        diametro_ponta_fina_min_cm: 0
+        comprimento_m: 1.20
+        valor_ton: 10
+      - id: SORT_P02
+        nome: Celulose
+        diametro_ponta_fina_min_cm: 8
+        comprimento_m: 2.40
+        valor_ton: 150
+      - id: SORT_P03
+        nome: Serraria_18
+        diametro_ponta_fina_min_cm: 18
+        comprimento_m: 3.05
+        valor_ton: 230
+      - id: SORT_P04
+        nome: Serraria_24
+        diametro_ponta_fina_min_cm: 24
+        comprimento_m: 3.05
+        valor_ton: 330
+      - id: SORT_P05
+        nome: Serraria_35
+        diametro_ponta_fina_min_cm: 35
+        comprimento_m: 3.05
+        valor_ton: 410
+
+  realista:
+    idade_min: 7
+    idade_max: 20
+    unidade_idade: anos
+    sortimentos:
+      - id: SORT_R01
+        nome: Energia
+        diametro_ponta_fina_min_cm: 0
+        comprimento_m: 1.20
+        valor_ton: 30
+      - id: SORT_R02
+        nome: Celulose
+        diametro_ponta_fina_min_cm: 8
+        comprimento_m: 2.40
+        valor_ton: 165
+      - id: SORT_R03
+        nome: Serraria_16
+        diametro_ponta_fina_min_cm: 16
+        comprimento_m: 2.65
+        valor_ton: 250
+      - id: SORT_R04
+        nome: Serraria_23
+        diametro_ponta_fina_min_cm: 23
+        comprimento_m: 2.65
+        valor_ton: 350
+      - id: SORT_R05
+        nome: Laminacao_33
+        diametro_ponta_fina_min_cm: 33
+        comprimento_m: 2.65
+        valor_ton: 440
+
+  otimista:
+    idade_min: 6
+    idade_max: 18
+    unidade_idade: anos
+    sortimentos:
+      - id: SORT_O01
+        nome: Energia
+        diametro_ponta_fina_min_cm: 0
+        comprimento_m: 1.20
+        valor_ton: 60
+      - id: SORT_O02
+        nome: Celulose
+        diametro_ponta_fina_min_cm: 6
+        comprimento_m: 2.40
+        valor_ton: 180
+      - id: SORT_O03
+        nome: Pallet
+        diametro_ponta_fina_min_cm: 16
+        comprimento_m: 2.55
+        valor_ton: 275
+      - id: SORT_O04
+        nome: Torno
+        diametro_ponta_fina_min_cm: 23
+        comprimento_m: 2.55
+        valor_ton: 375
+      - id: SORT_O05
+        nome: Laminacao_33
+        diametro_ponta_fina_min_cm: 33
+        comprimento_m: 2.55
+        valor_ton: 475
+      - id: SORT_O06
+        nome: Laminacao_43
+        diametro_ponta_fina_min_cm: 43
+        comprimento_m: 2.55
+        valor_ton: 600
+        observacao: valor_estimado
