@@ -3,6 +3,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
+QUALIDADE_CODIGOS = {
+    1: "boa",
+    2: "torta",
+    3: "bifurcacao_baixa",
+    4: "bifurcacao_alta",
+    5: "falha",
+    6: "dupla",
+    7: "final_de_linha",
+    8: "macaco_prego",
+    9: "morta",
+    10: "copa_quebrada",
+}
+
+
 ORDEM_PRIORIDADE_QUALIDADE = [
     "copa_quebrada",
     "bifurcacao_baixa",
@@ -17,10 +31,17 @@ class ArvoreQualitativa:
     """Representacao simplificada de arvore para selecao qualitativa."""
 
     id_arvore: str
-    qualidade: str
+    codigo_qualidade: int
     dap: float
     area_basal: float
     volume: float
+
+    @property
+    def qualidade(self) -> str:
+        return QUALIDADE_CODIGOS.get(
+            self.codigo_qualidade,
+            "desconhecida",
+        )
 
 
 class ErroSelecaoQualitativa(Exception):
@@ -34,7 +55,7 @@ def ordenar_para_remocao(
     """
     Ordena arvores da pior para melhor qualidade.
 
-    Esta primeira implementacao utiliza apenas prioridade qualitativa.
+    Utiliza prioridade qualitativa operacional.
     """
 
     prioridade = {
