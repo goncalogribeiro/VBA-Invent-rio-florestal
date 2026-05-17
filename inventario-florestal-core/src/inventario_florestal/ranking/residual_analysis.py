@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
+from statsmodels.stats.diagnostic import het_breuschpagan, het_white
 
 
 EPSILON = 1e-12
@@ -34,6 +35,9 @@ class DiagnosticoResidual:
     cook_distance: np.ndarray | None = None
     max_cook_distance: float | None = None
     n_observacoes_influentes: int | None = None
+    breusch_pagan_pvalor: float | None = None
+    white_pvalor: float | None = None
+    heterocedasticidade_detectada: bool | None = None
 
 
 
@@ -118,18 +122,7 @@ def cook_distance(
     leverage: np.ndarray,
     n_parametros: int,
 ) -> np.ndarray:
-    """Calcula Cook Distance para cada observacao.
-
-    Formula operacional:
-
-    D_i = (e_i² / (p * MSE)) * [h_ii / (1 - h_ii)²]
-
-    onde:
-    - e_i = residuo da observacao i;
-    - p = numero de parametros do modelo;
-    - MSE = quadrado medio residual;
-    - h_ii = leverage da observacao i.
-    """
+    """Calcula Cook Distance para cada observacao."""
 
     observado = np.asarray(observado, dtype=float)
     estimado = np.asarray(estimado, dtype=float)
@@ -145,6 +138,40 @@ def cook_distance(
     leverage_denom = np.clip((1 - leverage) ** 2, EPSILON, None)
 
     return (residuos**2 / denom) * (leverage / leverage_denom)
+
+
+
+def diagnosticar_heterocedasticidade(
+    residuos: np.ndarray,
+    matriz_x: np.ndarray,
+    alfa: float = 0.05,
+) -> tuple[float | None, float | None, bool | None]:
+    """Executa testes Breusch-Pagan e White.
+
+    Retorna:
+    - p-valor Breusch-Pagan;
+    - p-valor White;
+    - indicador consolidado de heterocedasticidade.
+    """
+
+    residuos = np.asarray(residuos, dtype=float)
+    x = np.asarray(matriz_x, dtype=float)
+
+    if len(residuos) <= x.shape[1] + 2:
+        return None, None, None
+
+    try:
+        bp = het_breuschpagan(residuos, x)
+        white = het_white(residuos, x)
+    except Exception:
+        return None, None, None
+
+    bp_pvalor = float(bp[1])
+    white_pvalor = float(white[1])
+
+    detectada = bool((bp_pvalor < alfa) or (white_pvalor < alfa))
+
+    return bp_pvalor, white_pvalor, detectada
 
 
 
@@ -167,8 +194,9 @@ def diagnosticar_residuos(
 ) -> DiagnosticoResidual:
     """Gera diagnostico residual.
 
-    Quando `matriz_x` e fornecida, calcula leverage, PRESS real e Cook
-    Distance. Caso contrario, usa PRESS aproximado.
+    Quando `matriz_x` e fornecida, calcula leverage, PRESS real, Cook
+    Distance e testes de heterocedasticidade. Caso contrario, usa PRESS
+    aproximado.
     """
 
     observado = np.asarray(observado, dtype=float)
@@ -184,6 +212,9 @@ def diagnosticar_residuos(
     cooks = None
     max_cook = None
     n_influentes = None
+    bp_pvalor = None
+    white_pvalor = None
+    hetero = None
 
     if matriz_x is not None:
         leverage = calcular_leverage(matriz_x)
@@ -197,6 +228,11 @@ def diagnosticar_residuos(
 
         limite_cook = 4 / max(len(observado), 1)
         n_influentes = int(np.sum(cooks > limite_cook))
+
+        bp_pvalor, white_pvalor, hetero = diagnosticar_heterocedasticidade(
+            residuos=residuos,
+            matriz_x=matriz_x,
+        )
     else:
         press = press_aproximado(observado, estimado)
 
@@ -215,4 +251,7 @@ def diagnosticar_residuos(
         cook_distance=cooks,
         max_cook_distance=max_cook,
         n_observacoes_influentes=n_influentes,
+        breusch_pagan_pvalor=bp_pvalor,
+        white_pvalor=white_pvalor,
+        heterocedasticidade_detectada=hetero,
     )
