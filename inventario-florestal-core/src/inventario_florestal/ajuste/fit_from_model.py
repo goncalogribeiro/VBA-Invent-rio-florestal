@@ -5,7 +5,8 @@ Este modulo conecta:
 - ModeloBiometrico;
 - interpretador de formula linear;
 - motor OLS;
-- correcao de vies para modelos logaritmicos.
+- correcao de vies para modelos logaritmicos;
+- diagnostico residual.
 """
 
 from __future__ import annotations
@@ -34,6 +35,10 @@ from inventario_florestal.ranking.metrics import (
     syx,
     syx_percentual,
 )
+from inventario_florestal.ranking.residual_analysis import (
+    DiagnosticoResidual,
+    diagnosticar_residuos,
+)
 
 
 @dataclass(frozen=True)
@@ -47,6 +52,7 @@ class ResultadoAjusteModelo:
     estimado_escala_original: np.ndarray | None
     fator_correcao_vies: float | None
     metricas_escala_original: dict[str, float] | None
+    diagnostico_residual: DiagnosticoResidual
 
 
 class ErroAjusteModelo(Exception):
@@ -91,6 +97,9 @@ def ajustar_modelo_linear_catalogo(
     fator_correcao = None
     metricas_original = None
 
+    observado_diagnostico = resultado.observado
+    estimado_diagnostico = resultado.estimado
+
     if preparada.y_transformado:
         if modelo.metodo_correcao_vies == "meyer" or modelo.eh_logaritmico:
             fator_correcao = fator_meyer(
@@ -127,6 +136,14 @@ def ajustar_modelo_linear_catalogo(
             "bias": bias(observado_original, estimado_original),
         }
 
+        observado_diagnostico = observado_original
+        estimado_diagnostico = estimado_original
+
+    diagnostico = diagnosticar_residuos(
+        observado=observado_diagnostico,
+        estimado=estimado_diagnostico,
+    )
+
     return ResultadoAjusteModelo(
         modelo_id=modelo.id,
         nome_modelo=modelo.nome,
@@ -135,4 +152,5 @@ def ajustar_modelo_linear_catalogo(
         estimado_escala_original=estimado_original,
         fator_correcao_vies=fator_correcao,
         metricas_escala_original=metricas_original,
+        diagnostico_residual=diagnostico,
     )
