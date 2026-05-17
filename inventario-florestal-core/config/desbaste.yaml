@@ -1,0 +1,87 @@
+# Configuração canônica de desbaste
+# Este arquivo complementa as configurações existentes e não substitui cenários, sortimentos ou conversões já definidos em outros arquivos.
+
+versao: "1.0"
+
+manejo:
+  desbaste:
+    tipos:
+      seletivo:
+        descricao: "Remoção individual de árvores conforme critérios qualitativos, sociológicos e biométricos."
+        ativo: true
+
+      sistematico:
+        descricao: "Remoção por regra geométrica ou operacional, como linhas/corredores."
+        ativo: false
+        status: "documentado_para_integracao_posterior"
+
+      misto:
+        descricao: "Combinação de remoção sistemática com seleção individual nas remanescentes."
+        ativo: false
+        status: "documentado_para_integracao_posterior"
+
+    gatilhos:
+      numero_arvores:
+        descricao: "Interrompe a seleção ao atingir o número ou percentual de árvores removidas."
+        unidade_padrao: "percentual"
+        minimo: 0.0
+        maximo: 0.60
+
+      area_basal:
+        descricao: "Interrompe a seleção ao atingir a área basal ou percentual de G removido."
+        unidade_padrao: "percentual"
+        minimo: 0.0
+        maximo: 0.60
+
+    prioridade_qualitativa:
+      - codigo: "copa_quebrada"
+        prioridade: 1
+        descricao: "Árvore com copa quebrada."
+      - codigo: "bifurcacao_baixa"
+        prioridade: 2
+        descricao: "Bifurcação baixa, com maior impacto na qualidade do fuste."
+      - codigo: "macacao_prego"
+        prioridade: 3
+        descricao: "Defeito operacional/qualitativo do tipo macacão ou prego."
+      - codigo: "torta"
+        prioridade: 4
+        descricao: "Árvore torta."
+      - codigo: "bifurcacao_alta"
+        prioridade: 5
+        descricao: "Bifurcação alta, penalidade menor que bifurcação baixa."
+      - codigo: "sem_defeito_grave"
+        prioridade: 99
+        descricao: "Sem defeito qualitativo prioritário."
+
+    prioridade_sociologica:
+      suprimida: 10
+      dominada: 20
+      codominante: 30
+      dominante: 40
+
+    regras:
+      usar_qualidade_antes_da_sociologia: true
+      usar_g_individual: true
+      manter_dominantes_quando_possivel: true
+      recalcular_estrutura_pos_intervencao: true
+
+    limites_operacionais:
+      percentual_remocao_maximo_padrao: 0.45
+      percentual_remocao_alerta: 0.40
+      percentual_g_maximo_padrao: 0.45
+      percentual_g_alerta: 0.40
+
+    formula_area_basal_individual:
+      expressao: "gi = pi * DAP_cm^2 / 40000"
+      unidade_saida: "m2"
+
+    cenarios_referencia:
+      leve:
+        percentual_arvores: 0.20
+        percentual_g: 0.20
+      moderado:
+        percentual_arvores: 0.30
+        percentual_g: 0.30
+      pesado:
+        percentual_arvores: 0.40
+        percentual_g: 0.40
