@@ -64,15 +64,7 @@ def ajustar_modelo_linear_catalogo(
     modelo: ModeloBiometrico,
     dados: pd.DataFrame,
 ) -> ResultadoAjusteModelo:
-    """Ajusta um modelo linear ou linearizado descrito no catalogo.
-
-    Parameters
-    ----------
-    modelo:
-        Definicao validada do modelo biometrico.
-    dados:
-        DataFrame contendo as variaveis originais.
-    """
+    """Ajusta um modelo linear ou linearizado descrito no catalogo."""
 
     if modelo.tipo_regressao not in {"linear", "linear_sem_intercepto"}:
         raise ErroAjusteModelo(
@@ -129,8 +121,7 @@ def ajustar_modelo_linear_catalogo(
             "syx_percentual": syx_percentual(
                 observado_original,
                 estimado_original,
-                n_parametros,
-            ),
+                n_parametros),
             "rmse": rmse(observado_original, estimado_original),
             "mae": mae(observado_original, estimado_original),
             "bias": bias(observado_original, estimado_original),
@@ -142,6 +133,7 @@ def ajustar_modelo_linear_catalogo(
     diagnostico = diagnosticar_residuos(
         observado=observado_diagnostico,
         estimado=estimado_diagnostico,
+        matriz_x=resultado.matriz_x,
     )
 
     return ResultadoAjusteModelo(
