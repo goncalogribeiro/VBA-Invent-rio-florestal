@@ -1,8 +1,9 @@
 """Analise residual para modelos biometricos.
 
 A avaliacao residual e uma etapa obrigatoria em biometria florestal, pois
-modelos com bom R² podem apresentar vies sistematico, heterocedasticidade ou
-comportamento inadequado em faixas especificas de DAP, altura ou volume.
+modelos com bom R² ajustado podem apresentar vies sistematico,
+heterocedasticidade ou comportamento inadequado em faixas especificas de DAP,
+altura ou volume.
 """
 
 from __future__ import annotations
@@ -27,6 +28,9 @@ class DiagnosticoResidual:
     media_residuos: float
     media_abs_residuos_percentuais: float
     max_abs_residuo_percentual: float
+    leverage: np.ndarray | None = None
+    max_leverage: float | None = None
+    press_real: bool = False
 
 
 
@@ -65,17 +69,51 @@ def residuos_padronizados(
 
 
 
+def calcular_leverage(matriz_x: np.ndarray) -> np.ndarray:
+    """Calcula os valores de leverage da matriz de projeto.
+
+    A diagonal da matriz hat e calculada por:
+
+    H = X (X'X)^-1 X'
+
+    Para estabilidade numerica, usa-se pseudo-inversa.
+    """
+
+    x = np.asarray(matriz_x, dtype=float)
+
+    if x.ndim != 2:
+        raise ValueError("A matriz X deve ser bidimensional.")
+
+    hat = x @ np.linalg.pinv(x.T @ x) @ x.T
+
+    return np.clip(np.diag(hat), 0.0, 1.0)
+
+
+
+def press_com_leverage(
+    observado: np.ndarray,
+    estimado: np.ndarray,
+    leverage: np.ndarray,
+) -> float:
+    """Calcula PRESS usando leverage."""
+
+    observado = np.asarray(observado, dtype=float)
+    estimado = np.asarray(estimado, dtype=float)
+    leverage = np.asarray(leverage, dtype=float)
+
+    residuos = observado - estimado
+
+    denom = np.clip(1 - leverage, EPSILON, None)
+
+    return float(np.sum((residuos / denom) ** 2))
+
+
+
 def press_aproximado(
     observado: np.ndarray,
     estimado: np.ndarray,
 ) -> float:
-    """Calcula PRESS aproximado sem matriz de alavancagem.
-
-    Esta versao inicial usa a soma de quadrados dos residuos como aproximação.
-    Futuramente sera substituida pela formula com leverage:
-
-    PRESS = soma[(e_i / (1 - h_ii))²]
-    """
+    """Calcula PRESS aproximado sem matriz de alavancagem."""
 
     residuos = np.asarray(observado, dtype=float) - np.asarray(estimado, dtype=float)
 
@@ -86,8 +124,13 @@ def press_aproximado(
 def diagnosticar_residuos(
     observado: np.ndarray,
     estimado: np.ndarray,
+    matriz_x: np.ndarray | None = None,
 ) -> DiagnosticoResidual:
-    """Gera diagnostico residual inicial."""
+    """Gera diagnostico residual.
+
+    Quando `matriz_x` e fornecida, calcula leverage e PRESS real. Caso
+    contrario, usa PRESS aproximado.
+    """
 
     observado = np.asarray(observado, dtype=float)
     estimado = np.asarray(estimado, dtype=float)
@@ -95,7 +138,18 @@ def diagnosticar_residuos(
     residuos = observado - estimado
     resid_perc = residuos_percentuais(observado, estimado)
     resid_pad = residuos_padronizados(observado, estimado)
-    press = press_aproximado(observado, estimado)
+
+    leverage = None
+    max_leverage = None
+    press_real = False
+
+    if matriz_x is not None:
+        leverage = calcular_leverage(matriz_x)
+        press = press_com_leverage(observado, estimado, leverage)
+        max_leverage = float(np.max(leverage))
+        press_real = True
+    else:
+        press = press_aproximado(observado, estimado)
 
     return DiagnosticoResidual(
         residuos=residuos,
@@ -106,4 +160,7 @@ def diagnosticar_residuos(
         media_residuos=float(np.mean(residuos)),
         media_abs_residuos_percentuais=float(np.mean(np.abs(resid_perc))),
         max_abs_residuo_percentual=float(np.max(np.abs(resid_perc))),
+        leverage=leverage,
+        max_leverage=max_leverage,
+        press_real=press_real,
     )
