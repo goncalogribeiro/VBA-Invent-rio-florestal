@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 
+from inventario_florestal.config.scenario_engine import (
+    CenarioOperacional,
+)
 from inventario_florestal.weibull.weibull_distribution import (
     ClasseDiametricaWeibull,
 )
@@ -34,13 +37,15 @@ def taper_generico_prognostico(
     classe: ClasseDiametricaWeibull,
     altura_estimada: float,
     fator_forma: float,
-    comprimentos: list[tuple[str, float, float]],
+    cenario: CenarioOperacional,
 ) -> ResultadoTaperClasse:
-    """Simula taper e sortimento para uma classe diametrica.
+    """Simula taper e sortimento usando um cenario operacional.
 
-    comprimentos:
-        Lista no formato:
-        [(nome_sortimento, diametro_minimo, comprimento)]
+    O cenario define:
+    - produtos;
+    - comprimentos de tora;
+    - diametros minimos;
+    - valores comerciais.
     """
 
     if fator_forma <= 0 or fator_forma > 1:
@@ -68,12 +73,8 @@ def taper_generico_prognostico(
     while h_atual < altura_util:
         tora_alocada = False
 
-        for nome, diam_min, comprimento in sorted(
-            comprimentos,
-            key=lambda x: x[1],
-            reverse=True,
-        ):
-            h_final = h_atual + comprimento
+        for sortimento in cenario.sortimentos:
+            h_final = h_atual + sortimento.comprimento_m
 
             if h_final > altura_util:
                 continue
@@ -82,22 +83,24 @@ def taper_generico_prognostico(
 
             d_topo = dap * ((1 - rel) ** alpha)
 
-            if d_topo >= diam_min:
-                d_base = dap * ((1 - (h_atual / altura_estimada)) ** alpha)
+            if d_topo >= sortimento.diametro_ponta_fina_min_cm:
+                d_base = dap * (
+                    (1 - (h_atual / altura_estimada)) ** alpha
+                )
 
                 d_med = (d_base + d_topo) / 2
 
                 volume = (
                     (math.pi / 40000)
                     * (d_med**2)
-                    * comprimento
+                    * sortimento.comprimento_m
                 )
 
                 toras.append(
                     ToraSortimento(
-                        comprimento=float(comprimento),
+                        comprimento=float(sortimento.comprimento_m),
                         diametro_ponta_fina=float(d_topo),
-                        sortimento=nome,
+                        sortimento=sortimento.nome,
                         volume_m3=float(volume),
                     )
                 )
