@@ -31,6 +31,7 @@ TipoRegressao = Literal[
 StatusValidacao = Literal[
     "pendente",
     "validado",
+    "experimental",
     "revisar_formula",
     "revisar_fonte",
     "nao_implementar",
@@ -45,6 +46,16 @@ class FonteModelo(BaseModel):
     titulo: str | None = None
     doi: str | None = None
     observacao: str | None = None
+
+
+class ConfiguracaoNLS(BaseModel):
+    """Configuracao para ajuste nao linear controlado."""
+
+    funcao_registrada: str
+    chute_inicial: list[float]
+    limites_inferiores: list[float] | None = None
+    limites_superiores: list[float] | None = None
+    max_iteracoes: int = 10000
 
 
 class ModeloBiometrico(BaseModel):
@@ -67,6 +78,7 @@ class ModeloBiometrico(BaseModel):
     metodo_ajuste: str | None = None
     metodo_inverso: str | None = None
     metodo_correcao_vies: str | None = None
+    nls: ConfiguracaoNLS | None = None
 
     especie: list[str] = Field(default_factory=list)
     regiao: list[str] = Field(default_factory=list)
