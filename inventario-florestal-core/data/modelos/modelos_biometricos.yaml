@@ -1,5 +1,5 @@
 metadata:
-  versao: "0.2"
+  versao: "0.3"
   descricao: "Catalogo estruturado de modelos biometricos, cenarios de sortimento e parametros operacionais"
 
 modelos:
@@ -61,6 +61,26 @@ modelos:
     status_validacao: pendente
 
 parametros_operacionais:
+  qualidade_arvores:
+    descricao: "Codigos qualitativos de arvores para inventario e manejo seletivo."
+    valores:
+      1: boa
+      2: torta
+      3: bifurcacao_baixa
+      4: bifurcacao_alta
+      5: falha
+      6: dupla
+      7: final_de_linha
+      8: macaco_prego
+      9: morta
+      10: copa_quebrada
+    prioridade_remocao_desbaste_seletivo:
+      - copa_quebrada
+      - bifurcacao_baixa
+      - macaco_prego
+      - torta
+      - bifurcacao_alta
+
   conversao_m3_ton:
     tipo: tabela_etaria
     unidade: "t/m3"
