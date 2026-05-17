@@ -16,7 +16,10 @@ from inventario_florestal.ajuste.fit_from_model import (
     ajustar_modelo_linear_catalogo,
 )
 from inventario_florestal.modelos.schema import CatalogoModelos, GrupoModelo
-from inventario_florestal.ranking.ranking_engine import calcular_pontuacao_padrao
+from inventario_florestal.ranking.ranking_engine import (
+    calcular_pontuacao_padrao,
+    combinar_metricas_com_diagnostico,
+)
 
 
 @dataclass(frozen=True)
@@ -57,17 +60,7 @@ def executar_torneio_linear(
     dados: pd.DataFrame,
     grupo: GrupoModelo,
 ) -> ResultadoTorneioModelos:
-    """Executa torneio entre modelos lineares/linearizados de um grupo.
-
-    Parameters
-    ----------
-    catalogo:
-        Catalogo validado de modelos biometricos.
-    dados:
-        Dados observados.
-    grupo:
-        Grupo biometrico a ser avaliado.
-    """
+    """Executa torneio entre modelos lineares/linearizados de um grupo."""
 
     modelos = catalogo.filtrar_por_grupo(grupo)
 
@@ -95,10 +88,15 @@ def executar_torneio_linear(
         try:
             ajuste = ajustar_modelo_linear_catalogo(modelo, dados)
 
-            metricas = (
+            metricas_base = (
                 ajuste.metricas_escala_original
                 if ajuste.metricas_escala_original is not None
                 else ajuste.resultado_linear.metricas
+            )
+
+            metricas = combinar_metricas_com_diagnostico(
+                metricas=metricas_base,
+                diagnostico=ajuste.diagnostico_residual,
             )
 
             pontuacao = calcular_pontuacao_padrao(metricas)
@@ -117,6 +115,7 @@ def executar_torneio_linear(
                     erro=None,
                 )
             )
+
         except (ErroAjusteModelo, ValueError, KeyError) as exc:
             itens_erro.append(
                 ItemRankingModelo(
