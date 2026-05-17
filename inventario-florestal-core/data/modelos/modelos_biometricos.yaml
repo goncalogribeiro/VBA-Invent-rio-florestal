@@ -1,0 +1,94 @@
+metadata:
+  versao: "0.1"
+  descricao: "Catalogo estruturado de modelos biometricos"
+
+modelos:
+
+  - id: H01
+
+    grupo: hipsometria
+
+    nome: Prodan
+
+    formula: "d^2 / h = beta0 + beta1*d + beta2*d^2"
+
+    variavel_dependente: h
+
+    variaveis_independentes:
+      - d
+
+    parametros:
+      - beta0
+      - beta1
+      - beta2
+
+    tipo_regressao: nao_linear
+
+    linearizavel: false
+
+    eh_logaritmico: false
+
+    base_logaritmo: null
+
+    metodo_ajuste: nls
+
+    metodo_inverso: newton_raphson
+
+    especie:
+      - pinus_taeda
+      - pinus_elliottii
+
+    regiao:
+      - sul_brasil
+
+    fonte:
+      autores: "Martins et al."
+      ano: 2021
+
+    status_validacao: pendente
+
+    observacoes:
+      - "Modelo inicial do catalogo"
+
+  - id: V01
+
+    grupo: volumetria
+
+    nome: Schumacher-Hall
+
+    formula: "ln(V) = beta0 + beta1*ln(DAP) + beta2*ln(H)"
+
+    variavel_dependente: V
+
+    variaveis_independentes:
+      - DAP
+      - H
+
+    parametros:
+      - beta0
+      - beta1
+      - beta2
+
+    tipo_regressao: linear
+
+    linearizavel: true
+
+    eh_logaritmico: true
+
+    base_logaritmo: ln
+
+    metodo_ajuste: ols
+
+    metodo_correcao_vies: meyer
+
+    especie:
+      - pinus_taeda
+
+    regiao:
+      - sul_brasil
+
+    fonte:
+      autores: "Stepka et al."
+      ano: 2017
+
+    status_validacao: pendente
