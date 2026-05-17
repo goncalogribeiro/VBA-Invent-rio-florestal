@@ -70,6 +70,52 @@ def naslund_hipsometrico(
 
 
 
+def granemann_hipsometrico(
+    x: np.ndarray,
+    beta0: float,
+    beta1: float,
+) -> np.ndarray:
+    """Modelo hipsometrico experimental Granemann.
+
+    Forma:
+
+    h = 1.3 + (hdom - 1.3) *
+        [1 - exp(-beta0 * (d / d_med)^beta1 * sqrt(G / 100))]
+
+    Variaveis esperadas em `x`:
+
+    - x[0]: d, DAP individual em cm;
+    - x[1]: hdom, altura dominante em m;
+    - x[2]: d_med, DAP medio do povoamento em cm;
+    - x[3]: G, area basal em m²/ha.
+
+    Status cientifico:
+    - modelo experimental;
+    - requer validacao com dados reais;
+    - nao deve ser tratado como modelo consolidado de literatura.
+    """
+
+    matriz = np.asarray(x, dtype=float)
+
+    if matriz.shape[0] != 4:
+        raise ValueError(
+            "O modelo Granemann requer x com quatro linhas: d, hdom, d_med e G."
+        )
+
+    d = matriz[0]
+    hdom = matriz[1]
+    d_med = np.clip(matriz[2], EPSILON, None)
+    g = np.clip(matriz[3], EPSILON, None)
+
+    razao_diametrica = np.clip(d / d_med, EPSILON, None)
+    competencia = np.sqrt(g / 100)
+
+    expoente = -beta0 * (razao_diametrica**beta1) * competencia
+
+    return 1.3 + (hdom - 1.3) * (1 - np.exp(expoente))
+
+
+
 def silva_bailey_sitio(
     idade: np.ndarray,
     beta0: float,
@@ -97,6 +143,7 @@ def silva_bailey_sitio(
 
 FUNCOES_NAO_LINEARES = {
     "chapman_richards_diametrico": chapman_richards_diametrico,
+    "granemann_hipsometrico": granemann_hipsometrico,
     "naslund_hipsometrico": naslund_hipsometrico,
     "silva_bailey_sitio": silva_bailey_sitio,
 }
