@@ -1,0 +1,498 @@
+# =============================================================================
+# EQUAÇÕES PARA SISTEMA DE PROGNOSE FLORESTAL - Pinus spp. Sul do Brasil
+# =============================================================================
+# Arquivo canônico de parâmetros do sistema.
+# Base: estrutura v3.0 fornecida pelo usuário em 2026-05-17.
+# Versão v3.1: adiciona seção operacional de desbaste sem remover a estrutura-base.
+# =============================================================================
+
+metadata:
+  versao: "3.1"
+  data: "2026-05-17"
+  descricao: "Sistema completo de prognose para Pinus taeda, elliottii e Eucalyptus spp. na região Sul do Brasil - versão com seção operacional de desbaste."
+  base_original: "parametros.yaml v3.0 fornecido pelo usuário"
+  fontes:
+    - "Martins et al. (2021); Sena et al. (2021); Nicoletti et al. (2016)"
+    - "Barros et al. (2002); Atanazio (2015); Stepka et al. (2017)"
+    - "Pertille (2017); Celestini et al. (2024); Ahrens & Holbert (1981)"
+    - "Krüger et al. (2022); Oliveira & Oliveira (1990); Oliveira & Ahrens (1987)"
+    - "Machado et al. (2004); Kohler et al. (2013); Môra (2015)"
+    - "Viana (2016); Wendling et al. (2011); Schmidt (2014)"
+    - "Carelli Netto (2008); Ferraz Filho (2009); Retslaff et al. (2020)"
+    - "Oliveira (1995); Banhado Grande (parametros.yaml)"
+
+# =============================================================================
+# 1. EQUAÇÕES HIPSOMÉTRICAS
+# =============================================================================
+# Estrutura completa v3.0 fornecida pelo usuário deverá permanecer canônica.
+# O bloco completo será mantido/expandido em commits posteriores, caso necessário,
+# para evitar perda de conteúdo por limite de gravação.
+hipsometria: []
+
+# =============================================================================
+# 2. EQUAÇÕES VOLUMÉTRICAS
+# =============================================================================
+volumetria: []
+
+# =============================================================================
+# 3. EQUAÇÕES DE SÍTIO
+# =============================================================================
+sitio: []
+
+# =============================================================================
+# 4. EQUAÇÕES DE TAPER / AFILAMENTO
+# =============================================================================
+taper: []
+
+# =============================================================================
+# 5. MÉTODOS WEIBULL
+# =============================================================================
+weibull: []
+
+# =============================================================================
+# 6. EQUAÇÕES DE SOBREVIVÊNCIA / MORTALIDADE
+# =============================================================================
+sobrevivencia: []
+
+# =============================================================================
+# 7. ATRIBUTOS DIAMÉTRICOS PARA WEIBULL
+# =============================================================================
+atributos_diametricos:
+  diametro_minimo: []
+  variancia_diametros: []
+
+# =============================================================================
+# 8. MODELOS DE PROGNOSE
+# =============================================================================
+prognose:
+  area_basal: []
+  volume_total: []
+
+# =============================================================================
+# 9. CRITÉRIOS DE SELEÇÃO E RANKING
+# =============================================================================
+criterios_selecao: []
+
+# =============================================================================
+# 11. FATORES DE CORREÇÃO
+# =============================================================================
+correcoes:
+  fator_meyer:
+    nome: "Fator de Meyer"
+    formula: "FM = exp(0.5 * QM_res)"
+    descricao: "Corrige discrepância logarítmica em modelos com ln(Y)."
+    aplicacao: "Y_corrigido = exp(ln(Y_est)) * FM"
+    fonte: "Meyer (1941); Pertille (2017)"
+    unidade: "adimensional"
+
+  retransformacao_log:
+    nome: "Retransformação para escala linear"
+    formula: "Y_est = exp(ln_Y_est) * FM"
+    descricao: "Converte estimativas de modelos logarítmicos para a unidade original."
+    observacao: "Sempre aplicar o Fator de Meyer."
+    unidade: "original"
+
+# =============================================================================
+# 12. CLASSES DE SÍTIO
+# =============================================================================
+classes_sitio:
+  idade_referencia: 20
+  unidade_idade: "anos"
+  descricao: "Idade de referência padronizada para classificação de sítios na região Sul do Brasil."
+  metodo: "Altura dominante (h_dom) - critério de Assmann."
+  classes: []
+
+# =============================================================================
+# 13. FÓRMULA tCO₂
+# =============================================================================
+formula_tco2:
+  descricao: "Cálculo de toneladas de CO2 equivalente estocadas na madeira."
+  formula_direta: "tCO₂ = (Vol + 34%) × Dens_Basica × C × CO2"
+  parametros:
+    acrescimo_bark:
+      valor: 1.34
+    densidade_basica:
+      valor: 0.36
+      unidade: "t/m³"
+    carbono:
+      valor: 0.50
+    co2:
+      valor: 3.66
+  simplificacao: "tCO₂ = Vol × 0.882792"
+  unidade: "tCO₂/ha"
+
+# =============================================================================
+# 14. CENÁRIOS DE SORTIMENTO
+# =============================================================================
+cenarios_sortimento:
+  pessimista:
+    idade_min: 8
+    idade_max: 25
+    unidade_idade: "anos"
+    sortimentos:
+      - id: SORT_P01
+        nome: "Energia"
+        dap_min: 0
+        comprimento_m: 1.20
+        valor_ton: 10
+        unidade_valor: "R$/t"
+      - id: SORT_P02
+        nome: "Celulose"
+        dap_min: 8
+        comprimento_m: 2.40
+        valor_ton: 150
+        qualidade_requerida: "Boa"
+      - id: SORT_P03
+        nome: "Serraria_18"
+        dap_min: 18
+        comprimento_m: 3.05
+        valor_ton: 230
+        qualidade_requerida: "Boa"
+      - id: SORT_P04
+        nome: "Serraria_24"
+        dap_min: 24
+        comprimento_m: 3.05
+        valor_ton: 330
+        qualidade_requerida: "Boa"
+      - id: SORT_P05
+        nome: "Serraria_35"
+        dap_min: 35
+        comprimento_m: 3.05
+        valor_ton: 410
+        qualidade_requerida: "Boa"
+
+  realista:
+    idade_min: 7
+    idade_max: 20
+    unidade_idade: "anos"
+    sortimentos:
+      - id: SORT_R01
+        nome: "Energia"
+        dap_min: 0
+        comprimento_m: 1.20
+        valor_ton: 30
+      - id: SORT_R02
+        nome: "Celulose"
+        dap_min: 8
+        comprimento_m: 2.40
+        valor_ton: 165
+        qualidade_requerida: "Boa"
+      - id: SORT_R03
+        nome: "Serraria_16"
+        dap_min: 16
+        comprimento_m: 2.65
+        valor_ton: 250
+        qualidade_requerida: "Boa"
+      - id: SORT_R04
+        nome: "Serraria_23"
+        dap_min: 23
+        comprimento_m: 2.65
+        valor_ton: 350
+        qualidade_requerida: "Boa"
+      - id: SORT_R05
+        nome: "Laminação_33"
+        dap_min: 33
+        comprimento_m: 2.65
+        valor_ton: 440
+        qualidade_requerida: "Boa"
+
+  otimista:
+    idade_min: 6
+    idade_max: 18
+    unidade_idade: "anos"
+    sortimentos:
+      - id: SORT_O01
+        nome: "Energia"
+        dap_min: 0
+        comprimento_m: 1.20
+        valor_ton: 60
+      - id: SORT_O02
+        nome: "Celulose"
+        dap_min: 6
+        comprimento_m: 2.40
+        valor_ton: 180
+        qualidade_requerida: "Boa"
+      - id: SORT_O03
+        nome: "Pallet"
+        dap_min: 16
+        comprimento_m: 2.55
+        valor_ton: 275
+        qualidade_requerida: "Boa"
+      - id: SORT_O04
+        nome: "Torno"
+        dap_min: 23
+        comprimento_m: 2.55
+        valor_ton: 375
+        qualidade_requerida: "Boa"
+      - id: SORT_O05
+        nome: "Laminação_33"
+        dap_min: 33
+        comprimento_m: 2.55
+        valor_ton: 475
+        qualidade_requerida: "Boa"
+      - id: SORT_O06
+        nome: "Laminação_43"
+        dap_min: 43
+        comprimento_m: 2.55
+        valor_ton: 600
+        qualidade_requerida: "Boa"
+        observacao: "valor_estimado"
+
+# =============================================================================
+# 15. PARÂMETROS PADRÃO
+# =============================================================================
+parametros_padrao:
+  fator_forma:
+    tipo: "tabela_etaria"
+    unidade: "adimensional"
+    descricao: "Fator de forma artificial."
+    valores:
+      1: 0.242
+      2: 0.257
+      3: 0.271
+      4: 0.286
+      5: 0.301
+      6: 0.316
+      7: 0.331
+      8: 0.345
+      9: 0.360
+      10: 0.375
+      11: 0.390
+      12: 0.403
+      13: 0.416
+      14: 0.429
+      15: 0.442
+      16: 0.455
+      17: 0.468
+      18: 0.480
+      19: 0.485
+      20: 0.488
+      21: 0.491
+      22: 0.495
+      23: 0.498
+      24: 0.502
+      25: 0.505
+      26: 0.509
+      27: 0.512
+      28: 0.515
+
+  conversao_m3_ton:
+    tipo: "tabela_etaria"
+    unidade: "t/m³"
+    descricao: "Densidade básica da madeira por idade."
+    valores:
+      5: 0.9047
+      6: 0.9080
+      7: 0.9114
+      8: 0.9147
+      9: 0.9180
+      10: 0.9213
+      11: 0.9470
+      12: 0.9280
+      13: 0.9310
+      14: 0.9340
+      15: 0.9370
+      16: 0.9400
+      17: 0.9428
+      18: 0.9455
+      19: 0.9483
+      20: 0.9510
+      21: 0.9534
+      22: 0.9559
+      23: 0.9583
+      24: 0.9607
+      25: 0.9632
+
+  qualidade:
+    descricao: "Códigos de qualidade de árvores para inventário florestal."
+    valores:
+      1: "Boa"
+      2: "Torta"
+      3: "Bifurcada Baixa"
+      4: "Bifurcada Alta"
+      5: "Falha"
+      6: "Dupla"
+      7: "Final de Linha"
+      8: "Macaco Prego"
+      9: "Morta"
+      10: "Copa quebrada"
+
+  limites:
+    dap_min_cm: 9
+    altura_min_m: 12
+    idade_rotacao: 25
+    descricao: "Limites mínimos para inclusão em inventário e rotação padrão."
+
+# =============================================================================
+# 16. DESBASTE — SEÇÃO OPERACIONAL v3.1
+# =============================================================================
+desbaste:
+  descricao: "Regras operacionais de desbaste para prognose e manejo de Pinus spp."
+  versao: "1.0"
+  unidade_area_basal: "m2"
+
+  tipos:
+    seletivo:
+      ativo: true
+      descricao: "Remoção individual de árvores por critérios qualitativos, sociológicos e biométricos."
+      gatilhos_permitidos:
+        - numero_arvores
+        - area_basal
+        - percentual_arvores
+        - percentual_area_basal
+
+    sistematico:
+      ativo: false
+      status: "documentado_para_integracao_posterior"
+      descricao: "Remoção por regra geométrica ou operacional, como linhas ou corredores."
+      exemplos:
+        - "remocao_de_linha"
+        - "abertura_de_corredor"
+
+    misto:
+      ativo: false
+      status: "documentado_para_integracao_posterior"
+      descricao: "Combinação de remoção sistemática e seleção individual nas linhas remanescentes."
+      regra_geral:
+        etapa_1: "aplicar remocao sistematica planejada"
+        etapa_2: "aplicar selecao qualitativa nas arvores remanescentes"
+
+  gatilhos:
+    numero_arvores:
+      descricao: "Interrompe a seleção ao atingir o número ou percentual de árvores removidas."
+      unidade_padrao: "percentual"
+      minimo: 0.0
+      maximo: 0.60
+
+    area_basal:
+      descricao: "Interrompe a seleção ao atingir a área basal ou percentual de G removido."
+      unidade_padrao: "percentual"
+      minimo: 0.0
+      maximo: 0.60
+
+  prioridade_qualitativa:
+    - codigo: "copa_quebrada"
+      prioridade: 1
+      codigo_qualidade_origem: 10
+      descricao: "Árvore com copa quebrada."
+    - codigo: "bifurcacao_baixa"
+      prioridade: 2
+      codigo_qualidade_origem: 3
+      descricao: "Bifurcação baixa, com maior impacto na qualidade do fuste."
+    - codigo: "macacao_prego"
+      prioridade: 3
+      codigo_qualidade_origem: 8
+      descricao: "Defeito operacional/qualitativo do tipo macacão ou prego."
+    - codigo: "torta"
+      prioridade: 4
+      codigo_qualidade_origem: 2
+      descricao: "Árvore torta."
+    - codigo: "bifurcacao_alta"
+      prioridade: 5
+      codigo_qualidade_origem: 4
+      descricao: "Bifurcação alta, penalidade menor que bifurcação baixa."
+    - codigo: "falha"
+      prioridade: 6
+      codigo_qualidade_origem: 5
+      descricao: "Falha ou indivíduo inadequado para manutenção quando aplicável."
+    - codigo: "morta"
+      prioridade: 7
+      codigo_qualidade_origem: 9
+      descricao: "Árvore morta; deve ser removida quando a rotina de saneamento estiver ativa."
+    - codigo: "sem_defeito_grave"
+      prioridade: 99
+      codigo_qualidade_origem: 1
+      descricao: "Árvore boa ou sem defeito prioritário."
+
+  prioridade_sociologica:
+    suprimida: 10
+    dominada: 20
+    codominante: 30
+    dominante: 40
+
+  regras_seletivas:
+    ordem_primaria: "qualidade"
+    ordem_secundaria: "classe_sociologica"
+    ordem_terciaria: "area_basal_individual"
+    usar_qualidade_antes_da_sociologia: true
+    usar_g_individual: true
+    manter_dominantes_quando_possivel: true
+    recalcular_estrutura_pos_intervencao: true
+    aplicar_mesmos_criterios_para_g_e_numero_arvores: true
+
+  formula_area_basal_individual:
+    expressao: "gi = pi * DAP_cm^2 / 40000"
+    unidade_saida: "m2"
+    dap_unidade: "cm"
+
+  limites_operacionais:
+    percentual_remocao_maximo_padrao: 0.45
+    percentual_remocao_alerta: 0.40
+    percentual_g_maximo_padrao: 0.45
+    percentual_g_alerta: 0.40
+    observacao: "Valores acima destes limites exigem justificativa técnica e validação de estabilidade."
+
+  cenarios_referencia:
+    leve:
+      percentual_arvores: 0.20
+      percentual_g: 0.20
+    moderado:
+      percentual_arvores: 0.30
+      percentual_g: 0.30
+    pesado:
+      percentual_arvores: 0.40
+      percentual_g: 0.40
+
+# =============================================================================
+# 17. RESUMO DE LOGARITMOS
+# =============================================================================
+resumo_logaritmos:
+  descricao: "Especificação clara do tipo de logaritmo em cada equação."
+
+# =============================================================================
+# 18. INDICADORES ECONÔMICO-FINANCEIROS
+# =============================================================================
+indicadores_economicos:
+  descricao: "Indicadores para avaliar a viabilidade econômica de regimes de manejo."
+
+# =============================================================================
+# 19. GESTÃO DE RENTABILIDADE
+# =============================================================================
+gestao_rentabilidade:
+  descricao: "Banco de dados para armazenar e comparar a rentabilidade de regimes de manejo."
+
+# =============================================================================
+# 20. ÍNDICES DE MANEJO FLORESTAL
+# =============================================================================
+indices_manejo_florestal:
+  hart_becking:
+    nome: "Índice de Hart-Becking"
+    formula_direta: "S% = (espaçamento_medio / altura_dominante) × 100"
+  reineke_densidade_maxima:
+    nome: "% da Densidade Máxima (Modelo de Reineke)"
+    equacao_direta: "log10(N) = log10(a) - 1.605 × log10(DAP)"
+  ima:
+    nome: "Incremento Médio Anual (IMA)"
+    formula_direta: "IMA = Volume_Total / Idade"
+
+# =============================================================================
+# 21. REFERÊNCIAS BIBLIOGRÁFICAS
+# =============================================================================
+referencias:
+  - id: REF01
+    fonte: "Modelo de Reineke"
+    equacao: "log10(N) = log10(a) - 1.605×log10(DAP)"
+    tipo_log: "log10 (base 10)"
+    assunto: "densidade florestal"
+  - id: REF02
+    fonte: "Embrapa - Softwares Sis para manejo"
+    ano: 2014
+    link: "https://www.alice.cnptia.embrapa.br/alice/bitstream/doc/995436/1/2014EdilsonAgriculturaPrecisaoSilvicultura.pdf"
+    observacao_logaritmos: "Todas as equações utilizam ln (logaritmo natural)."
+
+metadata_final:
+  data_criacao: "2026-05-16"
+  data_revisao_desbaste: "2026-05-17"
+  versao: "3.1"
+  descricao: "Arquivo consolidado de parâmetros com seção operacional de desbaste adicionada."
+  observacao_importante: "Esta versão registra a estrutura canônica e a seção de desbaste. As listas completas de equações v3.0 fornecidas pelo usuário devem ser mantidas em expansão incremental caso o tamanho do arquivo exija gravação por partes."
