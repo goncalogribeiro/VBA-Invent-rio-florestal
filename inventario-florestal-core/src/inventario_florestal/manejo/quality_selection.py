@@ -54,8 +54,6 @@ def ordenar_para_remocao(
 ) -> list[ArvoreQualitativa]:
     """
     Ordena arvores da pior para melhor qualidade.
-
-    Utiliza prioridade qualitativa operacional.
     """
 
     prioridade = {
@@ -90,3 +88,40 @@ def selecionar_por_percentual_arvores(
     quantidade = int(len(ordenadas) * intensidade)
 
     return ordenadas[:quantidade]
+
+
+
+def selecionar_por_area_basal(
+    arvores: list[ArvoreQualitativa],
+    percentual_g_removido: float,
+) -> list[ArvoreQualitativa]:
+    """
+    Seleciona arvores ate atingir G alvo.
+
+    Mantem exatamente os mesmos criterios qualitativos.
+    """
+
+    if percentual_g_removido <= 0 or percentual_g_removido >= 1:
+        raise ErroSelecaoQualitativa(
+            "Percentual de G deve estar entre 0 e 1."
+        )
+
+    ordenadas = ordenar_para_remocao(arvores)
+
+    g_total = sum(arv.area_basal for arv in arvores)
+
+    g_alvo = g_total * percentual_g_removido
+
+    removidas: list[ArvoreQualitativa] = []
+
+    g_acumulado = 0.0
+
+    for arv in ordenadas:
+        removidas.append(arv)
+
+        g_acumulado += arv.area_basal
+
+        if g_acumulado >= g_alvo:
+            break
+
+    return removidas
